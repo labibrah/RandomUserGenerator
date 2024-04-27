@@ -1,0 +1,41 @@
+/* Styling Text */
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  text-align: center; /* Centering the content horizontally */
+}
+
+h1 {
+  font-size: 2em;
+  margin-bottom: 0.5em;
+}
+
+p {
+  font-size: 1em;
+  margin-bottom: 1em;
+}
+
+/* Styling Buttons */
+.button {
+  display: inline-block;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background-color: #007bff; /* Change this to your preferred button color */
+  color: #fff;
+  font-size: 1em;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.3s;
+}
+
+.button:hover {
+  background-color: #0056b3; /* Darker shade of the button color on hover */
+}
+
+/* Centering the Table */
+table {
+  margin: 0 auto; /* Centering the table horizontally */
+}
