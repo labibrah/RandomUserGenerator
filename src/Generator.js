@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import InfiniteScroll from "react-infinite-scroll-component";
+import _, { map } from 'underscore';
 
 
-const regions = [ 'USA', 'India', 'Serbia']; // Add more regions if needed
+const Generator = () => {
+    const regions = [ 'USA', 'India', 'Serbia']; // Add more regions if needed
 
 const applyRandomError = (str) => {
     const errorType = Math.floor(Math.random() * 3); // Randomly choose an error type (0, 1, or 2)
@@ -25,7 +27,7 @@ const deleteCharacter = (str) => {
 
 const addRandomCharacter = (str) => {
     const index = Math.floor(Math.random() * str.length); // Choose a random index to add a character
-    const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'; // Define alphabet
+    const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; // Define alphabet
     const randomChar = alphabet[Math.floor(Math.random() * alphabet.length)]; // Choose a random character from the alphabet
     return str.slice(0, index) + randomChar + str.slice(index); // Insert the random character at the chosen index
 };
@@ -35,11 +37,13 @@ const swapNearCharacters = (str) => {
     return str.slice(0, index) + str[index + 1] + str[index] + str.slice(index + 2); // Swap characters at the chosen index and the next one
 };
     
-const times = (n, fn) => {
+    const times = (n, fn) => {
+        var seedrandom = require('seedrandom');
+        var rng = seedrandom(selectedSeed + page);
     if (n < 0) throw new Error("The first argument cannot be negative.");
     return (arg) => {
         for (let i = Math.floor(n); i--;) arg = fn(arg);
-        return Math.random() < n % 1 ? fn(arg) : arg;
+        return rng() < n % 1 ? fn(arg) : arg;
     };
 };
     
@@ -62,23 +66,29 @@ const generateRandomUserData = async (region, errorCount=0, seed, page = 1) => {
         const data = await response.json();
         console.log(data);
         const users = data.results.map(result => {
-        const identifier = Math.random().toString(36).substr(2, 9);
+        const identifier = Math.random(seed + page).toString(36).substr(2, 15);
         const name = `${result.name.title} ${result.name.first} ${result.name.last}`;
         const address = `${result.location.street.number} ${result.location.street.name}, ${result.location.city}, ${result.location.state}, ${result.location.country}, ${result.location.postcode}`;
-            const phone = result.phone;
+        const phone = result.phone;
             
             let modifiedName = name;
             let modifiedAddress = address;
             let modifiedPhone = phone;
 
-            // Introduce errors based on the specified error count
-            if (errorCount > 0) {
-                const applyError = times(errorCount, applyRandomError);
-                modifiedName = applyError(modifiedName);
-                modifiedAddress = applyError(modifiedAddress);
-                modifiedPhone = applyError(modifiedPhone);
-            }
+            // Randomly select one field to introduce errors
 
+            // Introduce errors based on the specified error count for the selected field
+            if (errorCount > 0) {
+            const fieldIndex = _.sample([0, 1, 2]); // 0: name, 1: address, 2: phone
+                const applyError = times(errorCount, applyRandomError);
+                if (fieldIndex === 0) {
+                    modifiedName = applyError(modifiedName);
+                } else if (fieldIndex === 1) {
+                    modifiedAddress = applyError(modifiedAddress);
+                } else {
+                    modifiedPhone = applyError(modifiedPhone);
+                }
+            }
             return { identifier, name: modifiedName, address: modifiedAddress, phone: modifiedPhone };
       });
       return users;
@@ -86,7 +96,6 @@ const generateRandomUserData = async (region, errorCount=0, seed, page = 1) => {
       throw new Error('Error fetching user data:', error);
     }
   };
-const Generator = () => {
 // const storedCountry = sessionStorage.getItem('selectedCountry');
 // const initialCountry = storedCountry ? storedCountry : regions[0];
     
@@ -94,7 +103,7 @@ const Generator = () => {
 const initialSeed = Math.floor(Math.random() * 1000000).toString();
     
   const [selectedRegion, setSelectedRegion] = useState(regions[0]);
-  const [errorCount, setErrorCount] = useState(0);
+  const [errorCount, setErrorCount] = useState(0.0);
  const [selectedSeed, setSeed] = useState(initialSeed);
   const [page, setPage] = useState(1);
     
@@ -121,6 +130,7 @@ const initialSeed = Math.floor(Math.random() * 1000000).toString();
   const generateData = async () => {
       
       try {
+          
         const newData = await generateRandomUserData(selectedRegion, errorCount, selectedSeed, 1);
         setUserData(newData);
       } catch (error) {
@@ -130,7 +140,7 @@ const initialSeed = Math.floor(Math.random() * 1000000).toString();
 
     const handleRegionChange = (e) => {
         // window.location.reload(false);
-        console.log(localStorage);
+        // console.log(localStorage);
       setSelectedRegion(e.target.value);
   };
 
@@ -152,11 +162,11 @@ const initialSeed = Math.floor(Math.random() * 1000000).toString();
   };
 
   const handleSliderChange = (e) => {
-      let value = parseInt(e.target.value);
+      let value = parseFloat(e.target.value);
       value = Math.max(0, Math.min(1000, value));
       setErrorCount(value);
 
-      console.log(value);
+    //   console.log(value);
   };
     
 
@@ -178,14 +188,33 @@ const initialSeed = Math.floor(Math.random() * 1000000).toString();
       setPage((prevPage) => prevPage + 1);
     const response = await fetch(`https://randomuser.me/api/?seed=${selectedSeed + page}&results=10&nat=${code}&inc=name,location,phone`);
         const data = await response.json();
-        console.log(data);
+        // console.log(data);
         const users = data.results.map(result => {
-        const identifier = Math.random().toString(36).substr(2, 9);
+        const identifier = Math.random(selectedSeed + page).toString(36).substr(2, 15);
         const name = `${result.name.title} ${result.name.first} ${result.name.last}`;
         const address = `${result.location.street.number} ${result.location.street.name}, ${result.location.city}, ${result.location.state}, ${result.location.country}, ${result.location.postcode}`;
         const phone = result.phone;
-            return { identifier, name, address, phone };
-        });
+
+            let modifiedName = name;
+            let modifiedAddress = address;
+            let modifiedPhone = phone;
+
+            // Randomly select one field to introduce errors
+            const fieldIndex = _.sample([0, 1, 2]); // 0: name, 1: address, 2: phone
+
+            // Introduce errors based on the specified error count for the selected field
+            if (errorCount > 0) {
+                const applyError = times(errorCount, applyRandomError);
+                if (fieldIndex === 0) {
+                    modifiedName = applyError(modifiedName);
+                } else if (fieldIndex === 1) {
+                    modifiedAddress = applyError(modifiedAddress);
+                } else {
+                    modifiedPhone = applyError(modifiedPhone);
+                }
+            }
+            return { identifier, name: modifiedName, address: modifiedAddress, phone: modifiedPhone };
+      });
         setUserData((prevUserData) => [...prevUserData, ...users]);
       
   };
